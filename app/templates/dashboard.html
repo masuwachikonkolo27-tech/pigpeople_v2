@@ -1,0 +1,334 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<!-- ===== SKY BLUE BACKGROUND + WATERMARK ===== -->
+<style>
+body {
+    background-color: #87CEEB;
+    background-image: url("{{ url_for('static', filename='pig_logo.png') }}");
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-attachment: fixed;
+    background-size: 300px 300px;
+}
+
+/* ===== SOFT GLASS CARDS ===== */
+
+.glass-green{
+background: rgba(25,135,84,0.35);
+backdrop-filter: blur(8px);
+border:1px solid rgba(255,255,255,0.25);
+}
+
+.glass-red{
+background: rgba(220,53,69,0.35);
+backdrop-filter: blur(8px);
+border:1px solid rgba(255,255,255,0.25);
+}
+
+.glass-blue{
+background: rgba(13,110,253,0.35);
+backdrop-filter: blur(8px);
+border:1px solid rgba(255,255,255,0.25);
+}
+
+.glass-yellow{
+background: rgba(255,193,7,0.35);
+backdrop-filter: blur(8px);
+border:1px solid rgba(255,255,255,0.25);
+}
+
+.glass-dark{
+background: rgba(0,0,0,0.30);
+backdrop-filter: blur(8px);
+border:1px solid rgba(255,255,255,0.20);
+}
+
+/* ===== SOFT GLASS TABLES ===== */
+
+.table-dark{
+background: rgba(0,0,0,0.25) !important;
+backdrop-filter: blur(6px);
+}
+
+.table-dark th,
+.table-dark td{
+background: transparent !important;
+}
+
+</style>
+
+<!-- HEADER -->
+<div class="text-center mb-4">
+
+<img src="{{ url_for('static', filename='pig_logo.png') }}"
+alt="Pig People Logo"
+style="width:90px; margin-bottom:10px;">
+
+<h2 class="mb-2">PIG PEOPLE</h2>
+
+<p style="color:#0d6efd; font-weight:bold; font-size:18px;">
+Raising Quality, Delivering Trust
+</p>
+
+</div>
+
+<div class="row mb-4">
+
+<div class="col-md-3">
+<div class="card glass-green text-white">
+<div class="card-body text-center">
+<h5>Available Pigs</h5>
+<h2>{{ available }}</h2>
+</div>
+</div>
+</div>
+
+<div class="col-md-3">
+<div class="card glass-red text-white">
+<div class="card-body text-center">
+<h5>Sold Pigs</h5>
+<h2>{{ sold }}</h2>
+</div>
+</div>
+</div>
+
+{% if current_user.role == "admin" %}
+
+<div class="col-md-3">
+<div class="card glass-blue text-white">
+<div class="card-body text-center">
+<h5>Total Sales</h5>
+<h2>ZMW {{ "{:,.2f}".format(total_sales) }}</h2>
+</div>
+</div>
+</div>
+
+<div class="col-md-3">
+<div class="card glass-yellow text-dark">
+<div class="card-body text-center">
+<h5>Total Expenses</h5>
+<h2>ZMW {{ "{:,.2f}".format(total_expenses) }}</h2>
+</div>
+</div>
+</div>
+
+{% endif %}
+
+</div>
+
+<hr>
+
+{% if current_user.role == "admin" %}
+
+<h4>📊 Profit & Loss</h4>
+
+<canvas id="profitChart" height="100"></canvas>
+
+<script>
+var ctx = document.getElementById('profitChart').getContext('2d');
+
+new Chart(ctx, {
+type: 'bar',
+data: {
+labels: ['Sales','Expenses','Profit'],
+datasets: [{
+label: 'Farm Performance',
+data: [{{ total_sales }}, {{ total_expenses }}, {{ profit }}],
+
+backgroundColor: [
+'rgba(46,204,113,0.45)',
+'rgba(231,76,60,0.45)',
+'rgba(52,152,219,0.45)'
+],
+
+borderColor: [
+'rgba(46,204,113,1)',
+'rgba(231,76,60,1)',
+'rgba(52,152,219,1)'
+],
+
+borderWidth: 2
+
+}]
+}
+});
+</script>
+
+<hr>
+
+<h4>💵 Net Profit (Sales - Expenses)</h4>
+
+<div class="card glass-dark text-white">
+<div class="card-body text-center">
+<h2>ZMW {{ "{:,.2f}".format(profit) }}</h2>
+</div>
+</div>
+
+<hr>
+
+{% endif %}
+
+<h4>🐖 Add Pig</h4>
+
+<form method="POST" action="/add_pig" enctype="multipart/form-data" class="row g-3">
+
+<div class="col-md-3">
+<input name="tag" class="form-control" placeholder="Pig Tag / Name / Number" required>
+</div>
+
+<div class="col-md-3">
+<input name="breed" class="form-control" placeholder="Breed" required>
+</div>
+
+<div class="col-md-3">
+<input name="weight" class="form-control" placeholder="Weight (kg)" required>
+</div>
+
+<div class="col-md-3">
+<input name="age" class="form-control" placeholder="Age (months)" required>
+</div>
+
+<div class="col-md-12">
+<div class="mb-3">
+<label>Pig Photo</label>
+<input type="file" name="photo" class="form-control">
+</div>
+</div>
+
+<div class="col-md-12 mt-2">
+<button class="btn btn-success w-100">Add Pig</button>
+</div>
+
+</form>
+
+<hr>
+
+<h4>💰 Add Sale</h4>
+
+<form method="POST" action="/add_sale" class="row g-3">
+
+<div class="col-md-4">
+<select name="pig_id" class="form-control">
+
+{% for pig in pigs %}
+{% if pig.status == "Available" %}
+<option value="{{ pig.id }}">{{ pig.tag }} - {{ pig.breed }}</option>
+{% endif %}
+{% endfor %}
+
+</select>
+</div>
+
+<div class="col-md-4">
+<input name="price" class="form-control" placeholder="Sale Price ZMW" required>
+</div>
+
+<div class="col-md-4">
+<button class="btn btn-primary w-100">Record Sale</button>
+</div>
+
+</form>
+
+<hr>
+
+<h4>📄 Add Expense</h4>
+
+<form method="POST" action="/add_expense" class="row g-3">
+
+<div class="col-md-6">
+<input name="description" class="form-control" placeholder="Expense description" required>
+</div>
+
+<div class="col-md-3">
+<input name="amount" class="form-control" placeholder="Amount ZMW" required>
+</div>
+
+<div class="col-md-3">
+<button class="btn btn-warning w-100">Add Expense</button>
+</div>
+
+</form>
+
+<hr>
+
+<h3>📉 Expense Records</h3>
+
+<table class="table table-dark table-striped">
+
+<tr>
+<th>Description</th>
+<th>Amount</th>
+<th>Entered By</th>
+<th>Date</th>
+<th>Time</th>
+</tr>
+
+{% for exp in expenses %}
+
+<tr>
+<td>{{ exp.description }}</td>
+<td>ZMW {{ "{:,.2f}".format(exp.amount) }}</td>
+<td>{{ exp.entered_by }}</td>
+<td>{{ exp.date }}</td>
+<td>{{ exp.time }}</td>
+</tr>
+
+{% endfor %}
+
+</table>
+
+<hr>
+
+<h3>📦 Pig Inventory</h3>
+
+<table class="table table-dark table-striped">
+
+<tr>
+<th>Photo</th>
+<th>Tag</th>
+<th>Breed</th>
+<th>Weight</th>
+<th>Age</th>
+<th>Status</th>
+<th>Entered By</th>
+<th>Date</th>
+<th>Time</th>
+<th>Action</th>
+</tr>
+
+{% for pig in pigs %}
+
+<tr>
+
+<td>
+{% if pig.photo %}
+<img src="{{ url_for('static', filename='pig_images/' + pig.photo) }}" width="70">
+{% else %}
+No Photo
+{% endif %}
+</td>
+
+<td>{{ pig.tag }}</td>
+<td>{{ pig.breed }}</td>
+<td>{{ pig.weight }}</td>
+<td>{{ pig.age }}</td>
+<td>{{ pig.status }}</td>
+<td>{{ pig.entered_by }}</td>
+<td>{{ pig.date }}</td>
+<td>{{ pig.time }}</td>
+
+<td>
+{% if current_user.role == "admin" %}
+<a href="/delete_pig/{{ pig.id }}" class="btn btn-sm btn-danger">Delete</a>
+{% endif %}
+</td>
+
+</tr>
+
+{% endfor %}
+
+</table>
+
+{% endblock %}

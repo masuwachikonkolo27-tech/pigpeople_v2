@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2>Users</h2>
+
+{% if current_user.role == "admin" %}
+<hr>
+<h4>Create Worker</h4>
+
+<form method="POST" action="/add_user" class="row g-3 mb-4">
+  <div class="col-md-4">
+    <input name="name" class="form-control" placeholder="Worker Name" required>
+  </div>
+  <div class="col-md-3">
+    <input name="username" class="form-control" placeholder="Username" required>
+  </div>
+  <div class="col-md-3">
+    <input name="password" class="form-control" placeholder="Password" required>
+  </div>
+  <div class="col-md-2">
+    <button type="submit" class="btn btn-success w-100">Create Worker</button>
+  </div>
+</form>
+{% endif %}
+
+<hr>
+
+<table class="table table-dark table-striped">
+  <tr>
+    <th>Name</th>
+    <th>Username</th>
+    <th>Role</th>
+    <th>Action</th>
+  </tr>
+  {% for u in users %}
+  <tr>
+    <td>{{ u.name }}</td>
+    <td>{{ u.username }}</td>
+    <td>{{ u.role }}</td>
+    <td>
+      {% if current_user.role == "admin" and u.role != "admin" %}
+      <a href="/delete_user/{{ u.id }}" class="btn btn-danger btn-sm">Delete</a>
+      {% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+
+{% endblock %}
