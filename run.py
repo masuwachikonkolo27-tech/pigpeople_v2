@@ -6,6 +6,9 @@ from werkzeug.security import generate_password_hash
 # Create Flask app
 app = create_app()
 
+# Expose Flask app for Gunicorn
+application = app
+
 # Ensure database tables exist and default admin is created
 with app.app_context():
     db.create_all()
@@ -20,7 +23,7 @@ with app.app_context():
         db.session.add(admin)
         db.session.commit()
 
-# Run the app (for local testing)
+# Run the app locally (debug mode) if executed directly
 if __name__ == "__main__":
     app.run(
         host="0.0.0.0",  # required for Render
