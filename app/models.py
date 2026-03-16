@@ -8,14 +8,11 @@ from datetime import datetime
 # =========================
 zambia = pytz.timezone("Africa/Lusaka")
 
-
 def current_zambia_date():
     return datetime.now(zambia).date()
 
-
 def current_zambia_time():
     return datetime.now(zambia).time().replace(microsecond=0)
-
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -28,11 +25,9 @@ def load_user(user_id):
 class User(db.Model, UserMixin):
 
     id = db.Column(db.Integer, primary_key=True)
-
     name = db.Column(db.String(100))
     username = db.Column(db.String(100), unique=True)
     password = db.Column(db.String(100))
-
     role = db.Column(db.String(20))  # admin / worker
 
 
@@ -53,13 +48,9 @@ class Pig(db.Model):
 
     entered_by = db.Column(db.String(100))
 
-    # PHOTO FIELD
     photo = db.Column(db.String(200))
 
-    # DATE (ZAMBIA)
     date = db.Column(db.Date, default=current_zambia_date)
-
-    # TIME (ZAMBIA)
     time = db.Column(db.Time, default=current_zambia_time)
 
 
@@ -76,10 +67,7 @@ class Sale(db.Model):
 
     entered_by = db.Column(db.String(100))
 
-    # DATE (ZAMBIA)
     date = db.Column(db.Date, default=current_zambia_date)
-
-    # TIME (ZAMBIA)
     time = db.Column(db.Time, default=current_zambia_time)
 
 
@@ -96,8 +84,55 @@ class Expense(db.Model):
 
     entered_by = db.Column(db.String(100))
 
-    # DATE (ZAMBIA)
+    date = db.Column(db.Date, default=current_zambia_date)
+    time = db.Column(db.Time, default=current_zambia_time)
+
+
+# =====================================================
+# NEW ADDITIONS (NO EXISTING LOGIC CHANGED)
+# =====================================================
+
+# ------------------------
+# Pig Weight Tracking
+# ------------------------
+class PigWeight(db.Model):
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    pig_id = db.Column(db.String(20), db.ForeignKey('pig.tag'), nullable=False)
+
     date = db.Column(db.Date, default=current_zambia_date)
 
-    # TIME (ZAMBIA)
-    time = db.Column(db.Time, default=current_zambia_time)
+    weight = db.Column(db.Float, nullable=False)
+
+
+# ------------------------
+# Vaccination Tracking
+# ------------------------
+class Vaccination(db.Model):
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    pig_id = db.Column(db.String(20), db.ForeignKey('pig.tag'), nullable=False)
+
+    vaccine = db.Column(db.String(50), nullable=False)
+
+    date = db.Column(db.Date, default=current_zambia_date)
+
+    next_due = db.Column(db.Date)
+
+
+# ------------------------
+# Breeding Tracking
+# ------------------------
+class Breeding(db.Model):
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    sow_id = db.Column(db.String(20), db.ForeignKey('pig.tag'), nullable=False)
+
+    boar_id = db.Column(db.String(20), db.ForeignKey('pig.tag'), nullable=False)
+
+    mating_date = db.Column(db.Date)
+
+    expected_birth = db.Column(db.Date)

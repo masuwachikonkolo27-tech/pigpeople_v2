@@ -1,8 +1,10 @@
+
 import os
 from werkzeug.utils import secure_filename
 
-from flask import Blueprint, render_template, request, redirect, url_for, send_file
+from flask import Blueprint, render_template, request, redirect, url_for, send_file, flash
 from .models import *
+from .models import PigWeight, Vaccination, Breeding
 from . import db
 from flask_login import login_user, logout_user, login_required, current_user
 
@@ -11,7 +13,6 @@ import io
 from reportlab.pdfgen import canvas
 
 main = Blueprint("main", __name__)
-
 
 # =========================
 # LOGIN
@@ -183,164 +184,118 @@ def delete_pig(id):
     return redirect("/dashboard")
 
 
-# =========================
-# PDF REPORT
-# =========================
-@main.route("/pdf_report")
+# =====================================================
+# NEW ADDITIONS (Weight / Vaccination / Breeding)
+# =====================================================
+
+# ------------------------
+# Pig Weight Tracking
+# ------------------------
+@main.route('/pig/<pig_id>/weight', methods=['GET','POST'])
 @login_required
-def pdf_report():
+def pig_weight(pig_id):
 
-    pigs = Pig.query.all()
-    sales = Sale.query.all()
-    expenses = Expense.query.all()
+    pig = Pig.query.filter_by(tag=pig_id).first_or_404()
 
-    buffer = io.BytesIO()
+    if request.method == 'POST':
 
-    pdf = canvas.Canvas(buffer)
+        weight = float(request.form['weight'])
 
-    y = 800
+        entry = PigWeight(
+            pig_id=pig.tag,
+            weight=weight
+        )
 
-    pdf.setFont("Helvetica-Bold", 16)
-    pdf.drawString(200, y, "PIG PEOPLE REPORT")
+        db.session.add(entry)
+        db.session.commit()
 
-    y -= 40
-    pdf.setFont("Helvetica", 12)
+        flash("Weight recorded successfully")
 
-    pdf.drawString(50, y, f"Total Pigs: {len(pigs)}")
-    y -= 20
-    pdf.drawString(50, y, f"Total Sales: {sum([s.price for s in sales])}")
-    y -= 20
-    pdf.drawString(50, y, f"Total Expenses: {sum([e.amount for e in expenses])}")
+        return redirect(url_for('main.pig_weight', pig_id=pig.tag))
 
-    y -= 40
-    pdf.drawString(50, y, "Pig Inventory")
-    y -= 20
+    weights = PigWeight.query.filter_by(pig_id=pig.tag).all()
 
-    for pig in pigs:
-        pdf.drawString(50, y, f"{pig.tag} - {pig.breed} - {pig.status}")
-        y -= 20
-
-        if y < 100:
-            pdf.showPage()
-            y = 800
-
-    pdf.save()
-
-    buffer.seek(0)
-
-    return send_file(
-        buffer,
-        download_name="PIG_PEOPLE_REPORT.pdf",
-        as_attachment=True,
-        mimetype="application/pdf"
+    return render_template(
+        "pig_weight.html",
+        pig=pig,
+        weights=weights
     )
 
 
-# =========================
-# EXCEL REPORT
-# =========================
-@main.route("/excel_report")
+# ------------------------
+# Vaccination Tracking
+# ------------------------
+@main.route('/pig/<pig_id>/vaccination', methods=['GET','POST'])
 @login_required
-def excel_report():
+def pig_vaccination(pig_id):
 
-    pigs = Pig.query.all()
-    sales = Sale.query.all()
-    expenses = Expense.query.all()
+    pig = Pig.query.filter_by(tag=pig_id).first_or_404()
 
-    output = io.BytesIO()
+    if request.method == 'POST':
 
-    with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
+        vaccine = request.form['vaccine']
+        next_due = request.form['next_due']
 
-        pd.DataFrame([{
-            "Pig Tag": p.tag,
-            "Breed": p.breed,
-            "Weight": p.weight,
-            "Status": p.status
-        } for p in pigs]).to_excel(writer, sheet_name="Pigs", index=False)
+        entry = Vaccination(
+            pig_id=pig.tag,
+            vaccine=vaccine,
+            next_due=next_due
+        )
 
-        pd.DataFrame([{
-            "Pig ID": s.pig_id,
-            "Price": s.price
-        } for s in sales]).to_excel(writer, sheet_name="Sales", index=False)
+        db.session.add(entry)
+        db.session.commit()
 
-        pd.DataFrame([{
-            "Description": e.description,
-            "Amount": e.amount
-        } for e in expenses]).to_excel(writer, sheet_name="Expenses", index=False)
+        flash("Vaccination recorded")
 
-    output.seek(0)
+        return redirect(url_for('main.pig_vaccination', pig_id=pig.tag))
 
-    return send_file(
-        output,
-        download_name="PIG_PEOPLE_REPORT.xlsx",
-        as_attachment=True
+    vaccinations = Vaccination.query.filter_by(pig_id=pig.tag).all()
+
+    return render_template(
+        "pig_vaccination.html",
+        pig=pig,
+        vaccinations=vaccinations
     )
 
 
-# =========================
-# VIEW USERS
-# =========================
-@main.route("/users")
+# ------------------------
+# Breeding Tracking
+# ------------------------
+@main.route('/breeding', methods=['GET','POST'])
 @login_required
-def users():
+def breeding():
 
-    if current_user.role != "admin":
-        return redirect("/dashboard")
+    pigs = Pig.query.filter_by(status="Available").all()
 
-    users = User.query.all()
-    return render_template("users.html", users=users)
+    if request.method == 'POST':
 
+        sow_id = request.form['sow_id']
+        boar_id = request.form['boar_id']
+        mating_date = request.form['mating_date']
+        expected_birth = request.form['expected_birth']
 
-# =========================
-# CREATE WORKER
-# =========================
-@main.route("/add_user", methods=["POST"])
-@login_required
-def add_user():
+        entry = Breeding(
+            sow_id=sow_id,
+            boar_id=boar_id,
+            mating_date=mating_date,
+            expected_birth=expected_birth
+        )
 
-    if current_user.role != "admin":
-        return redirect("/dashboard")
+        db.session.add(entry)
+        db.session.commit()
 
-    name = request.form["name"]
-    username = request.form["username"]
-    password = request.form["password"]
+        flash("Breeding recorded")
 
-    existing_user = User.query.filter_by(username=username).first()
-    if existing_user:
-        return "Username already exists!"
+        return redirect(url_for("main.breeding"))
 
-    new_user = User(
-        name=name,
-        username=username,
-        password=password,
-        role="worker"
+    breedings = Breeding.query.all()
+
+    return render_template(
+        "breeding.html",
+        breedings=breedings,
+        pigs=pigs
     )
 
-    db.session.add(new_user)
-    db.session.commit()
-
-    return redirect("/users")
-
-
-# =========================
-# DELETE WORKER
-# =========================
-@main.route("/delete_user/<int:id>")
-@login_required
-def delete_user(id):
-
-    if current_user.role != "admin":
-        return redirect("/dashboard")
-
-    user = User.query.get_or_404(id)
-
-    if user.role == "admin":
-        return "Cannot delete admin user!"
-
-    db.session.delete(user)
-    db.session.commit()
-
-    return redirect("/users")
 
 # =========================
 # LOGOUT
@@ -350,3 +305,4 @@ def delete_user(id):
 def logout():
     logout_user()
     return redirect("/")
+
