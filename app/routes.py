@@ -330,17 +330,11 @@ def excel_report():
     } for p in pigs])
 
     output = io.BytesIO()
-    # Corrected: no writer.save()
     with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
         df.to_excel(writer, index=False, sheet_name="Pigs")
-
+        writer.save()
     output.seek(0)
-    return send_file(
-        output,
-        as_attachment=True,
-        download_name="pigs.xlsx",
-        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
+    return send_file(output, as_attachment=True, download_name="pigs.xlsx", mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
 
 # =========================

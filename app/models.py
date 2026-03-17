@@ -23,33 +23,26 @@ def load_user(user_id):
 # USER MODEL
 # =========================
 class User(db.Model, UserMixin):
-
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100))
     username = db.Column(db.String(100), unique=True)
-    password = db.Column(db.String(100))
-    role = db.Column(db.String(20))  # admin / worker
+    password = db.Column(db.String(200))  # increased length for hashed passwords
+    role = db.Column(db.String(20))  # admin / worker / ceo
+    is_blocked = db.Column(db.Boolean, default=False)
 
 
 # =========================
 # PIG MODEL
 # =========================
 class Pig(db.Model):
-
     id = db.Column(db.Integer, primary_key=True)
-
     tag = db.Column(db.String(20), unique=True)
-
     breed = db.Column(db.String(100))
     weight = db.Column(db.Float)
     age = db.Column(db.Integer)
-
     status = db.Column(db.String(20), default="Available")
-
     entered_by = db.Column(db.String(100))
-
     photo = db.Column(db.String(200))
-
     date = db.Column(db.Date, default=current_zambia_date)
     time = db.Column(db.Time, default=current_zambia_time)
 
@@ -58,15 +51,10 @@ class Pig(db.Model):
 # SALE MODEL
 # =========================
 class Sale(db.Model):
-
     id = db.Column(db.Integer, primary_key=True)
-
     pig_id = db.Column(db.Integer, db.ForeignKey("pig.id"))
-
     price = db.Column(db.Float)
-
     entered_by = db.Column(db.String(100))
-
     date = db.Column(db.Date, default=current_zambia_date)
     time = db.Column(db.Time, default=current_zambia_time)
 
@@ -75,64 +63,49 @@ class Sale(db.Model):
 # EXPENSE MODEL
 # =========================
 class Expense(db.Model):
-
     id = db.Column(db.Integer, primary_key=True)
-
     description = db.Column(db.String(200))
-
     amount = db.Column(db.Float)
-
     entered_by = db.Column(db.String(100))
-
     date = db.Column(db.Date, default=current_zambia_date)
     time = db.Column(db.Time, default=current_zambia_time)
 
 
-# =====================================================
-# NEW ADDITIONS (NO EXISTING LOGIC CHANGED)
-# =====================================================
-
-# ------------------------
-# Pig Weight Tracking
-# ------------------------
+# =========================
+# PIG WEIGHT TRACKING
+# =========================
 class PigWeight(db.Model):
-
     id = db.Column(db.Integer, primary_key=True)
-
     pig_id = db.Column(db.String(20), db.ForeignKey('pig.tag'), nullable=False)
-
     date = db.Column(db.Date, default=current_zambia_date)
-
     weight = db.Column(db.Float, nullable=False)
 
 
-# ------------------------
-# Vaccination Tracking
-# ------------------------
+# =========================
+# VACCINATION TRACKING
+# =========================
 class Vaccination(db.Model):
-
     id = db.Column(db.Integer, primary_key=True)
-
     pig_id = db.Column(db.String(20), db.ForeignKey('pig.tag'), nullable=False)
-
     vaccine = db.Column(db.String(50), nullable=False)
-
     date = db.Column(db.Date, default=current_zambia_date)
-
     next_due = db.Column(db.Date)
 
 
-# ------------------------
-# Breeding Tracking
-# ------------------------
+# =========================
+# BREEDING TRACKING
+# =========================
 class Breeding(db.Model):
-
     id = db.Column(db.Integer, primary_key=True)
-
     sow_id = db.Column(db.String(20), db.ForeignKey('pig.tag'), nullable=False)
-
     boar_id = db.Column(db.String(20), db.ForeignKey('pig.tag'), nullable=False)
-
     mating_date = db.Column(db.Date)
-
     expected_birth = db.Column(db.Date)
+
+
+# =========================
+# SYSTEM CONTROL
+# =========================
+class SystemControl(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    hide_financials = db.Column(db.Boolean, default=False)
