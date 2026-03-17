@@ -2,7 +2,6 @@
 
 {% block content %}
 
-<!-- ===== SKY BLUE BACKGROUND + WATERMARK ===== -->
 <style>
 body {
     background-color: #87CEEB;
@@ -13,53 +12,73 @@ body {
     background-size: 300px 300px;
 }
 
-/* ===== SOFT GLASS CARDS ===== */
-
 .glass-green{
-background: rgba(25,135,84,0.35);
-backdrop-filter: blur(8px);
-border:1px solid rgba(255,255,255,0.25);
+    background: rgba(25,135,84,0.35);
+    backdrop-filter: blur(8px);
+    border:1px solid rgba(255,255,255,0.25);
 }
 
 .glass-red{
-background: rgba(220,53,69,0.35);
-backdrop-filter: blur(8px);
-border:1px solid rgba(255,255,255,0.25);
+    background: rgba(220,53,69,0.35);
+    backdrop-filter: blur(8px);
+    border:1px solid rgba(255,255,255,0.25);
 }
 
 .glass-blue{
-background: rgba(13,110,253,0.35);
-backdrop-filter: blur(8px);
-border:1px solid rgba(255,255,255,0.25);
+    background: rgba(13,110,253,0.35);
+    backdrop-filter: blur(8px);
+    border:1px solid rgba(255,255,255,0.25);
 }
 
 .glass-yellow{
-background: rgba(255,193,7,0.35);
-backdrop-filter: blur(8px);
-border:1px solid rgba(255,255,255,0.25);
+    background: rgba(255,193,7,0.35);
+    backdrop-filter: blur(8px);
+    border:1px solid rgba(255,255,255,0.25);
 }
 
 .glass-dark{
-background: rgba(0,0,0,0.30);
-backdrop-filter: blur(8px);
-border:1px solid rgba(255,255,255,0.20);
+    background: rgba(0,0,0,0.30);
+    backdrop-filter: blur(8px);
+    border:1px solid rgba(255,255,255,0.20);
 }
 
-/* ===== SOFT GLASS TABLES ===== */
-
 .table-dark{
-background: rgba(0,0,0,0.25) !important;
-backdrop-filter: blur(6px);
+    background: rgba(0,0,0,0.25) !important;
+    backdrop-filter: blur(6px);
 }
 
 .table-dark th,
 .table-dark td{
-background: transparent !important;
+    background: transparent !important;
 }
 
+/* ===== Welcome Message Style ===== */
+.welcome-msg {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    padding: 10px 18px;
+    border-radius: 12px;
+    font-weight: bold;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 16px; /* smaller font */
+    background: linear-gradient(90deg, #6a11cb, #2575fc);
+    color: white;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    z-index: 1000;
+}
 </style>
 
-<!-- HEADER -->
+<!-- ===== WELCOME MESSAGE ===== -->
+<div class="welcome-msg">
+{% if current_user.role == "admin" %}
+Welcome Mr. {{ current_user.name }} – C.E.O
+{% else %}
+Welcome {{ current_user.name }} – Worker
+{% endif %}
+</div>
+
+<!-- ===== LOGO HEADER ===== -->
 <div class="text-center mb-4">
 
 <img src="{{ url_for('static', filename='pig_logo.png') }}"
@@ -71,6 +90,23 @@ style="width:90px; margin-bottom:10px;">
 <p style="color:#0d6efd; font-weight:bold; font-size:18px;">
 Raising Quality, Delivering Trust
 </p>
+
+</div>
+
+<!-- ===== TOP SYSTEM BUTTONS ===== -->
+<div class="text-center mb-3">
+
+<a href="{{ url_for('main.breeding') }}" class="btn btn-dark m-1">
+🐖 Breeding Records
+</a>
+
+<a href="#pig_inventory" class="btn btn-info m-1">
+⚖ Weight Records
+</a>
+
+<a href="#pig_inventory" class="btn btn-warning m-1">
+💉 Vaccination Records
+</a>
 
 </div>
 
@@ -129,28 +165,24 @@ Raising Quality, Delivering Trust
 <script>
 var ctx = document.getElementById('profitChart').getContext('2d');
 
-new Chart(ctx, {
-type: 'bar',
-data: {
-labels: ['Sales','Expenses','Profit'],
-datasets: [{
-label: 'Farm Performance',
-data: [{{ total_sales }}, {{ total_expenses }}, {{ profit }}],
-
-backgroundColor: [
+new Chart(ctx,{
+type:'bar',
+data:{
+labels:['Sales','Expenses','Profit'],
+datasets:[{
+label:'Farm Performance',
+data:[{{ total_sales }},{{ total_expenses }},{{ profit }}],
+backgroundColor:[
 'rgba(46,204,113,0.45)',
 'rgba(231,76,60,0.45)',
 'rgba(52,152,219,0.45)'
 ],
-
-borderColor: [
+borderColor:[
 'rgba(46,204,113,1)',
 'rgba(231,76,60,1)',
 'rgba(52,152,219,1)'
 ],
-
-borderWidth: 2
-
+borderWidth:2
 }]
 }
 });
@@ -191,10 +223,8 @@ borderWidth: 2
 </div>
 
 <div class="col-md-12">
-<div class="mb-3">
 <label>Pig Photo</label>
 <input type="file" name="photo" class="form-control">
-</div>
 </div>
 
 <div class="col-md-12 mt-2">
@@ -214,6 +244,7 @@ borderWidth: 2
 
 {% for pig in pigs %}
 {% if pig.status == "Available" %}
+
 <option value="{{ pig.id }}">{{ pig.tag }} - {{ pig.breed }}</option>
 {% endif %}
 {% endfor %}
@@ -281,7 +312,7 @@ borderWidth: 2
 
 <hr>
 
-<h3>📦 Pig Inventory</h3>
+<h3 id="pig_inventory">📦 Pig Inventory</h3>
 
 <table class="table table-dark table-striped">
 
@@ -295,7 +326,7 @@ borderWidth: 2
 <th>Entered By</th>
 <th>Date</th>
 <th>Time</th>
-<th>Action</th>
+<th>Actions</th>
 </tr>
 
 {% for pig in pigs %}
@@ -320,9 +351,19 @@ No Photo
 <td>{{ pig.time }}</td>
 
 <td>
-{% if current_user.role == "admin" %}
-<a href="/delete_pig/{{ pig.id }}" class="btn btn-sm btn-danger">Delete</a>
+
+<a href="{{ url_for('main.pig_weight', pig_id=pig.tag) }}" class="btn btn-sm btn-info">
+⚖ Weight
+</a>
+
+<a href="{{ url_for('main.pig_vaccination', pig_id=pig.tag) }}" class="btn btn-sm btn-warning">
+💉 Vaccine
+</a>
+
+{% if current_user.role == "admin" %} <a href="/delete_pig/{{ pig.id }}" class="btn btn-sm btn-danger">
+Delete </a>
 {% endif %}
+
 </td>
 
 </tr>

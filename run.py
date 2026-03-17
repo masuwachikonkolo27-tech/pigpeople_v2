@@ -23,10 +23,10 @@ with app.app_context():
         db.session.add(admin)
         db.session.commit()
 
-# Run the app locally (debug mode) if executed directly
+# Run locally
 if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 10000))
     app.run(
-        host="0.0.0.0",  # required for Render
-        port=int(os.environ.get("PORT", 5000)),
-        debug=True       # remove debug=True for production
+        host="0.0.0.0",
+        port=port
     )
